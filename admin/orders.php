@@ -161,18 +161,21 @@ function renderQueueTable(orders) {
         }
 
         // Map status buttons
-        let actionsHtml = '';
+        let actionsHtml = `<button onclick="viewOrderDetails(${order.id})" class="px-2.5 py-1.5 bg-slate-150 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-200 text-slate-700 text-[10px] font-bold rounded-lg shadow-sm"><i class="fas fa-eye mr-1"></i>View</button>`;
+        
+        let updateBtn = '';
         if (order.status === 'received') {
-            actionsHtml = `<button onclick="updateOrderStatus(${order.id}, 'confirmed')" class="px-2.5 py-1.5 bg-brand-600 hover:bg-brand-700 text-white text-[10px] font-bold rounded-lg shadow">Confirm</button>`;
+            updateBtn = `<button onclick="updateOrderStatus(${order.id}, 'confirmed')" class="ml-1.5 px-2.5 py-1.5 bg-brand-600 hover:bg-brand-700 text-white text-[10px] font-bold rounded-lg shadow">Confirm</button>`;
         } else if (order.status === 'confirmed') {
-            actionsHtml = `<button onclick="updateOrderStatus(${order.id}, 'preparing')" class="px-2.5 py-1.5 bg-orange-500 hover:bg-orange-600 text-white text-[10px] font-bold rounded-lg shadow">Prepare</button>`;
+            updateBtn = `<button onclick="updateOrderStatus(${order.id}, 'preparing')" class="ml-1.5 px-2.5 py-1.5 bg-orange-500 hover:bg-orange-600 text-white text-[10px] font-bold rounded-lg shadow">Prepare</button>`;
         } else if (order.status === 'preparing') {
-            actionsHtml = `<button onclick="updateOrderStatus(${order.id}, 'ready')" class="px-2.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-[10px] font-bold rounded-lg shadow">Ready</button>`;
+            updateBtn = `<button onclick="updateOrderStatus(${order.id}, 'ready')" class="ml-1.5 px-2.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-[10px] font-bold rounded-lg shadow">Ready</button>`;
         } else if (order.status === 'ready') {
-            actionsHtml = `<button onclick="updateOrderStatus(${order.id}, 'out_of_delivery')" class="px-2.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold rounded-lg shadow">Out Delivery</button>`;
+            updateBtn = `<button onclick="updateOrderStatus(${order.id}, 'out_of_delivery')" class="ml-1.5 px-2.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold rounded-lg shadow">Out Delivery</button>`;
         } else if (order.status === 'out_of_delivery') {
-            actionsHtml = `<button onclick="updateOrderStatus(${order.id}, 'delivered')" class="px-2.5 py-1.5 bg-green-600 hover:bg-green-700 text-white text-[10px] font-bold rounded-lg shadow">Deliver</button>`;
+            updateBtn = `<button onclick="updateOrderStatus(${order.id}, 'delivered')" class="ml-1.5 px-2.5 py-1.5 bg-green-600 hover:bg-green-700 text-white text-[10px] font-bold rounded-lg shadow">Deliver</button>`;
         }
+        actionsHtml += updateBtn;
 
         // Add Cancel option for uncompleted
         if (!['delivered', 'cancelled'].includes(order.status)) {
@@ -193,7 +196,7 @@ function renderQueueTable(orders) {
                 <td class="p-4 font-bold text-slate-600 dark:text-slate-400">${delTime}</td>
                 <td class="p-4 font-black">₹${parseFloat(order.grand_total).toFixed(2)}</td>
                 <td class="p-4"><span class="px-2.5 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider ${tagColor}">${order.status.replace('_', ' ')}</span></td>
-                <td class="p-4 text-right flex justify-end items-center h-14">${actionsHtml}</td>
+                <td class="p-4 text-right flex justify-end items-center">${actionsHtml}</td>
             </tr>
         `;
     }).join('');
@@ -273,6 +276,194 @@ function exportOrdersToCSV() {
     document.body.removeChild(link);
     showToast('CSV Report Downloaded!', 'success');
 }
+
+let currentViewingOrderId = 0;
+
+async function viewOrderDetails(orderId) {
+    currentViewingOrderId = orderId;
+    try {
+        const res = await apiRequest(`/api/order-details.php?id=${orderId}`, {}, true);
+        if (res.status === 'success') {
+            const order = res.order;
+            const items = res.items;
+
+            document.getElementById('modal-order-number').textContent = `Order ${order.order_number}`;
+            document.getElementById('modal-order-date').textContent = `Placed on ${new Date(order.created_at).toLocaleString()}`;
+            
+            document.getElementById('modal-employee-name').textContent = `${order.employee_name} (${order.emp_code})`;
+            document.getElementById('modal-employee-contact').textContent = `${order.employee_email} | ${order.employee_phone}`;
+            
+            document.getElementById('modal-delivery-location').textContent = `Floor ${order.floor}, Cabin ${order.cabin || 'N/A'}, Desk ${order.desk_number || 'N/A'}`;
+            
+            const delTime = new Date('1970-01-01T' + order.delivery_time + 'Z').toLocaleTimeString([], {
+                hour: '2-digit', minute:'2-digit', timeZone: 'UTC'
+            });
+            document.getElementById('modal-delivery-time').textContent = `Slot: ${delTime} on ${order.delivery_date}`;
+            
+            document.getElementById('modal-special-instructions').textContent = order.special_instructions || 'None';
+            
+            document.getElementById('modal-subtotal').textContent = `₹${parseFloat(order.subtotal).toFixed(2)}`;
+            document.getElementById('modal-gst').textContent = `₹${parseFloat(order.gst).toFixed(2)}`;
+            document.getElementById('modal-grand-total').textContent = `₹${parseFloat(order.grand_total).toFixed(2)}`;
+            
+            // Set current status badge
+            let tagColor = 'bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-500';
+            if (order.status === 'cancelled') {
+                tagColor = 'bg-red-50 text-red-600 dark:bg-red-500/10';
+            } else if (order.status === 'received') {
+                tagColor = 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400';
+            } else if (order.status === 'preparing') {
+                tagColor = 'bg-orange-50 text-orange-600 dark:bg-orange-500/10';
+            } else if (order.status === 'ready') {
+                tagColor = 'bg-amber-50 text-amber-600 dark:bg-amber-500/10';
+            }
+            const statusBadge = document.getElementById('modal-current-status-badge');
+            statusBadge.className = `px-2.5 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider ${tagColor}`;
+            statusBadge.textContent = order.status.replace('_', ' ');
+
+            // Set current status select value
+            document.getElementById('modal-status-select').value = order.status;
+
+            // Render Items with Images
+            const itemsContainer = document.getElementById('modal-items-container');
+            itemsContainer.innerHTML = items.map(item => {
+                const vegBadge = item.veg_nonveg === 'veg' 
+                    ? '<span class="px-1.5 py-0.5 rounded text-[8px] font-bold bg-green-50 text-green-600 border border-green-200">Veg</span>' 
+                    : '<span class="px-1.5 py-0.5 rounded text-[8px] font-bold bg-red-50 text-red-600 border border-red-200">Non-Veg</span>';
+                
+                return `
+                    <div class="flex items-center justify-between py-3">
+                        <div class="flex items-center space-x-3">
+                            <img src="${item.image_url}" alt="${item.food_name}" class="w-12 h-12 rounded-xl object-cover border border-slate-100 dark:border-slate-700 shadow-sm">
+                            <div>
+                                <div class="flex items-center space-x-2 flex-wrap">
+                                    <span class="text-xs font-bold text-slate-800 dark:text-slate-100">${item.food_name}</span>
+                                    ${vegBadge}
+                                </div>
+                                <span class="text-[10px] text-slate-400">Qty: ${item.quantity} × ₹${parseFloat(item.price).toFixed(2)}</span>
+                                ${item.special_notes ? `<p class="text-[9px] text-amber-500 italic mt-0.5">Note: ${item.special_notes}</p>` : ''}
+                            </div>
+                        </div>
+                        <span class="text-xs font-black text-slate-700 dark:text-slate-300">₹${parseFloat(item.price * item.quantity).toFixed(2)}</span>
+                    </div>
+                `;
+            }).join('');
+
+            // Show Modal
+            const modal = document.getElementById('order-details-modal');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.querySelector('.transform').classList.remove('scale-95', 'opacity-0');
+            }, 10);
+        }
+    } catch(err) {
+        showToast('Failed to load order details', 'error');
+    }
+}
+
+function closeOrderDetailsModal() {
+    const modal = document.getElementById('order-details-modal');
+    modal.querySelector('.transform').classList.add('scale-95', 'opacity-0');
+    setTimeout(() => {
+        modal.classList.add('hidden');
+    }, 200);
+}
+
+// Bind modal status update button
+document.getElementById('modal-status-update-btn').addEventListener('click', async () => {
+    const select = document.getElementById('modal-status-select');
+    const newStatus = select.value;
+    
+    // Call existing updateOrderStatus function
+    await updateOrderStatus(currentViewingOrderId, newStatus);
+    
+    // Refresh modal info
+    closeOrderDetailsModal();
+});
 </script>
+
+<!-- Order Details Modal -->
+<div id="order-details-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm hidden animate-fade-in">
+    <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-xl w-full shadow-2xl border border-slate-100 dark:border-slate-700 transform scale-95 opacity-0 transition-all duration-200">
+        <div class="p-6 border-b border-slate-100 dark:border-slate-700/50 flex justify-between items-center">
+            <div>
+                <h3 class="text-base font-bold text-slate-800 dark:text-white" id="modal-order-number">Order Details</h3>
+                <p class="text-[10px] text-slate-400 font-semibold" id="modal-order-date"></p>
+            </div>
+            <button onclick="closeOrderDetailsModal()" class="w-8 h-8 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="p-6 space-y-5 overflow-y-auto max-h-[60vh]">
+            <!-- Row: User and location info -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-700/50">
+                <div class="space-y-1">
+                    <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Employee Details</span>
+                    <p class="text-xs font-extrabold text-slate-800 dark:text-slate-100" id="modal-employee-name"></p>
+                    <p class="text-[10px] text-slate-500" id="modal-employee-contact"></p>
+                </div>
+                <div class="space-y-1">
+                    <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Delivery Location & Slot</span>
+                    <p class="text-xs font-bold text-slate-800 dark:text-slate-200" id="modal-delivery-location"></p>
+                    <p class="text-[10px] text-slate-500" id="modal-delivery-time"></p>
+                </div>
+            </div>
+
+            <!-- Ordered Items List -->
+            <div>
+                <h4 class="text-xs font-extrabold text-slate-400 uppercase tracking-wider mb-2">Ordered Items</h4>
+                <div class="divide-y divide-slate-100 dark:divide-slate-700/50" id="modal-items-container">
+                    <!-- Dynamic rows -->
+                </div>
+            </div>
+
+            <!-- Special instructions & Totals -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-slate-100 dark:border-slate-700/50">
+                <div class="space-y-1">
+                    <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Special Instructions</span>
+                    <p class="text-xs italic text-slate-500 bg-slate-50 dark:bg-slate-900/30 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800" id="modal-special-instructions">None</p>
+                </div>
+                <div class="space-y-1.5 bg-slate-50 dark:bg-slate-900/30 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
+                    <div class="flex justify-between text-xs text-slate-500">
+                        <span>Subtotal</span>
+                        <span id="modal-subtotal">₹0.00</span>
+                    </div>
+                    <div class="flex justify-between text-xs text-slate-500">
+                        <span>GST (5%)</span>
+                        <span id="modal-gst">₹0.00</span>
+                    </div>
+                    <div class="flex justify-between text-xs font-black text-slate-800 dark:text-slate-100 pt-1.5 border-t border-slate-200 dark:border-slate-700">
+                        <span>Grand Total</span>
+                        <span id="modal-grand-total">₹0.00</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer status updater -->
+        <div class="p-6 border-t border-slate-100 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-900/30 rounded-b-3xl flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center space-x-2">
+                <span class="text-xs font-bold text-slate-500">Status:</span>
+                <span class="px-2.5 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider" id="modal-current-status-badge"></span>
+            </div>
+            
+            <div class="flex items-center space-x-2" id="modal-status-update-container">
+                <select id="modal-status-select" class="text-xs border border-slate-200 dark:border-slate-700 rounded-xl p-2 bg-white dark:bg-slate-850 focus:outline-none">
+                    <option value="received">Received</option>
+                    <option value="confirmed">Confirmed</option>
+                    <option value="preparing">Preparing</option>
+                    <option value="ready">Ready</option>
+                    <option value="out_of_delivery">Out for Delivery</option>
+                    <option value="delivered">Delivered</option>
+                    <option value="cancelled">Cancelled</option>
+                </select>
+                <button id="modal-status-update-btn" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs rounded-xl shadow transition-colors">
+                    Update Status
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <?php require_once dirname(__DIR__) . '/includes/admin_footer.php'; ?>
