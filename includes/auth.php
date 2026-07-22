@@ -3,12 +3,72 @@
  * Authentication and Security Helper Library
  */
 
-if (session_status() == PHP_SESSION_NONE) {
-    session_start();
+// Ensure database connection is present first
+require_once dirname(__DIR__) . '/config/db.php';
+
+// Custom database session handler for serverless (Vercel) deployments
+class DatabaseSessionHandler implements SessionHandlerInterface {
+    private $db;
+
+    public function __construct($db) {
+        $this->db = $db;
+    }
+
+    public function open($savePath, $sessionName): bool {
+        return true;
+    }
+
+    public function close(): bool {
+        return true;
+    }
+
+    public function read($id): string {
+        try {
+            $stmt = $this->db->prepare("SELECT data FROM sessions WHERE id = ?");
+            $stmt->execute([$id]);
+            $data = $stmt->fetchColumn();
+            return $data ? $data : '';
+        } catch (\Exception $e) {
+            return '';
+        }
+    }
+
+    public function write($id, $data): bool {
+        try {
+            $access = time();
+            $stmt = $this->db->prepare("REPLACE INTO sessions (id, data, access) VALUES (?, ?, ?)");
+            return $stmt->execute([$id, $data, $access]);
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    public function destroy($id): bool {
+        try {
+            $stmt = $this->db->prepare("DELETE FROM sessions WHERE id = ?");
+            return $stmt->execute([$id]);
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    public function gc($maxlifetime): int|false {
+        try {
+            $old = time() - $maxlifetime;
+            $stmt = $this->db->prepare("DELETE FROM sessions WHERE access < ?");
+            $stmt->execute([$old]);
+            return $stmt->rowCount();
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
 }
 
-// Ensure database connection is present if needed
-require_once dirname(__DIR__) . '/config/db.php';
+if (session_status() == PHP_SESSION_NONE) {
+    $handler = new DatabaseSessionHandler($pdo);
+    session_set_save_handler($handler, true);
+    session_start();
+}
 
 /**
  * Check if an employee is logged in

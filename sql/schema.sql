@@ -429,3 +429,12 @@ INSERT INTO `order_items` (`order_id`, `food_id`, `food_name`, `price`, `quantit
 -- Let's put settings and activity log
 INSERT INTO `activity_logs` (`user_id`, `user_role`, `action`, `details`) VALUES
 (1, 'admin', 'Database Setup', 'System database initialized and seeded with base data.');
+
+-- Create dynamic session storage for serverless deployments
+CREATE TABLE IF NOT EXISTS `sessions` (
+    `id` VARCHAR(128) NOT NULL,
+    `data` TEXT NOT NULL,
+    `access` INT(11) NOT NULL,
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
