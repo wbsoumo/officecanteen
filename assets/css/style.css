@@ -1,0 +1,167 @@
+/* Premium CSS tokens, skeleton structures and custom keyframes */
+
+:root {
+    --primary: #16A34A;
+    --accent: #F59E0B;
+    --background: #F8FAFC;
+    --card: #FFFFFF;
+    --font-family: 'Inter', sans-serif;
+}
+
+body {
+    font-family: var(--font-family);
+    background-color: var(--background);
+    color: #1E293B;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: #CBD5E1;
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #94A3B8;
+}
+
+/* Skeleton Loading Animation */
+.skeleton {
+    background: linear-gradient(90deg, #F1F5F9 25%, #E2E8F0 50%, #F1F5F9 75%);
+    background-size: 200% 100%;
+    animation: loading-skeleton 1.5s infinite;
+}
+
+@keyframes loading-skeleton {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* Custom Premium Cards */
+.premium-card {
+    border-radius: 20px;
+    background: #FFFFFF;
+    box-shadow: 0 4px 20px -2px rgba(148, 163, 184, 0.12), 0 2px 8px -1px rgba(148, 163, 184, 0.08);
+    transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+}
+.premium-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 30px -4px rgba(148, 163, 184, 0.2), 0 4px 12px -2px rgba(148, 163, 184, 0.1);
+    border-color: rgba(22, 163, 74, 0.2);
+}
+
+/* Glassmorphism utility */
+.glass {
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.dark .glass {
+    background: rgba(15, 23, 42, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Toast Message Container */
+#toast-container {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 380px;
+    width: calc(100% - 48px);
+}
+
+/* Floating Check Animation */
+.checkmark-circle {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: block;
+    stroke-width: 2;
+    stroke: #16A34A;
+    stroke-miterlimit: 10;
+    margin: 10% auto;
+    box-shadow: inset 0px 0px 0px #16A34A;
+    animation: fill-success .4s ease-in-out .4s forwards, scale-success .3s ease-in-out .9s alternate both;
+}
+
+.checkmark-check {
+    transform-origin: 50% 50%;
+    stroke-dasharray: 48;
+    stroke-dashoffset: 48;
+    animation: stroke-success 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
+}
+
+@keyframes stroke-success {
+    100% {
+        stroke-dashoffset: 0;
+    }
+}
+@keyframes fill-success {
+    100% {
+        box-shadow: inset 0px 0px 0px 40px #DCFCE7;
+    }
+}
+@keyframes scale-success {
+    0% {
+        transform: scale3d(1, 1, 1);
+    }
+    50% {
+        transform: scale3d(1.05, 1.05, 1);
+    }
+    100% {
+        transform: scale3d(1, 1, 1);
+    }
+}
+
+/* Custom Micro Animations */
+@keyframes pop-in {
+    0% { transform: scale(0.9); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.animate-pop-in {
+    animation: pop-in 200ms ease-out forwards;
+}
+
+/* Dark Mode Overrides */
+.dark {
+    --background: #0F172A;
+    --card: #1E293B;
+}
+.dark body {
+    background-color: var(--background);
+    color: #F1F5F9;
+}
+.dark .premium-card {
+    background: #1E293B;
+    border-color: rgba(51, 65, 85, 0.5);
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.3);
+}
+.dark .premium-card:hover {
+    border-color: rgba(22, 163, 74, 0.4);
+    box-shadow: 0 12px 30px -4px rgba(0, 0, 0, 0.4);
+}
+.dark input, .dark select, .dark textarea {
+    background-color: #334155;
+    color: #F1F5F9;
+    border-color: #475569;
+}
+.dark input::placeholder {
+    color: #94A3B8;
+}
