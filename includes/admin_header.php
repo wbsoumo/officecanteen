@@ -70,7 +70,7 @@ $admin_name = $_SESSION['admin_name'] ?? 'Staff Member';
     </script>
     <!-- Custom style variables & loader -->
     <link rel="stylesheet" href="/assets/css/style.css">
-    <script src="/assets/js/app.js" defer></script>
+    <script src="/assets/js/app.js?v=1.0.1" defer></script>
 </head>
 <body class="h-full flex flex-col md:flex-row bg-slate-50 dark:bg-slate-900 transition-colors duration-200">
 
