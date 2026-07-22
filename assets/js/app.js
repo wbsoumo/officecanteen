@@ -35,7 +35,7 @@ function showToast(message, type = 'success') {
         border = 'border-blue-100 dark:border-blue-900/30';
     }
 
-    toast.classList.add(border);
+    toast.classList.add(...border.split(' '));
     toast.innerHTML = `
         <div class="flex-shrink-0 mr-3">
             <i class="fas ${icon} text-xl"></i>
