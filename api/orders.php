@@ -65,15 +65,8 @@ try {
         }
     }
 
-    // Sort order (active items first, then newest orders first)
-    $query .= " ORDER BY CASE 
-                WHEN o.status = 'received' THEN 1
-                WHEN o.status = 'confirmed' THEN 2
-                WHEN o.status = 'preparing' THEN 3
-                WHEN o.status = 'ready' THEN 4
-                WHEN o.status = 'out_of_delivery' THEN 5
-                ELSE 6
-              END ASC, o.created_at DESC";
+    // Sort order: stable chronological order (newest first)
+    $query .= " ORDER BY o.created_at DESC";
 
     // Count total
     $count_query = "SELECT COUNT(*) FROM (" . $query . ") AS count_tbl";
