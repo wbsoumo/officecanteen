@@ -65,8 +65,13 @@ try {
     $stmt->execute($params);
     $foods = $stmt->fetchAll();
 
+    // Fetch categories for unified loading
+    $cat_stmt = $pdo->query("SELECT * FROM categories WHERE visibility = 1 ORDER BY sort_order ASC, name ASC");
+    $categories = $cat_stmt->fetchAll();
+
     json_response('success', 'Foods retrieved successfully', [
         'foods' => $foods,
+        'categories' => $categories,
         'pagination' => [
             'total_items' => (int)$total_items,
             'total_pages' => (int)$total_pages,

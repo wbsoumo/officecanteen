@@ -67,7 +67,16 @@ class DatabaseSessionHandler implements SessionHandlerInterface {
 if (session_status() == PHP_SESSION_NONE) {
     $handler = new DatabaseSessionHandler($pdo);
     session_set_save_handler($handler, true);
-    session_start();
+    
+    // Serverless Session Optimization: bypass database write lock for read-only scripts
+    $script = $_SERVER['SCRIPT_NAME'] ?? '';
+    $is_write_session = (strpos($script, 'login.php') !== false || strpos($script, 'logout.php') !== false || strpos($script, 'profile.php') !== false);
+    
+    if ($is_write_session) {
+        session_start();
+    } else {
+        session_start(['read_and_close' => true]);
+    }
 }
 
 /**

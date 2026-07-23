@@ -229,10 +229,8 @@ let searchQuery = '';
 document.addEventListener('DOMContentLoaded', () => {
     // Load local cart
     loadCart();
-    // Load categories
-    fetchCategories();
-    // Load foods
-    fetchFoods();
+    // Load consolidated menu data (categories + foods) in one query
+    fetchMenuData();
 
     // Bind search event
     document.getElementById('food-search').addEventListener('input', (e) => {
@@ -266,23 +264,14 @@ function saveCart() {
     updateCartUI();
 }
 
-// Fetch categories from API
-async function fetchCategories() {
-    try {
-        const res = await apiRequest('/api/categories.php');
-        if (res.status === 'success') {
-            categoriesList = res.categories;
-            renderCategories();
-        }
-    } catch(e) {}
-}
-
-// Fetch foods from API
-async function fetchFoods() {
+// Fetch consolidated menu data (foods + categories)
+async function fetchMenuData() {
     try {
         const res = await apiRequest('/api/get-foods.php');
         if (res.status === 'success') {
             foodsList = res.foods;
+            categoriesList = res.categories;
+            renderCategories();
             renderFoods();
         }
     } catch(e) {}
@@ -396,7 +385,7 @@ function renderFoods() {
         const tagIcon = food.veg_nonveg === 'veg' ? 'fa-circle text-green-600' : 'fa-triangle-exclamation text-red-500';
 
         return `
-            <div class="premium-card p-4 flex flex-col justify-between h-full bg-white dark:bg-slate-800">
+            <div class="premium-card hover-scale animate-slide-up p-4 flex flex-col justify-between h-full bg-white dark:bg-slate-800">
                 <div>
                     <!-- Card Top Image & Badges -->
                     <div class="relative rounded-2xl overflow-hidden mb-4 group/img h-40 bg-slate-100">
