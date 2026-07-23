@@ -39,6 +39,7 @@ if ($login_type === 'admin') {
             $_SESSION['username'] = $admin['username'];
             $_SESSION['admin_name'] = $admin['name'];
             $_SESSION['admin_role'] = $admin['role']; // admin, chef, kitchen
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 
             // Log activity
             log_activity($pdo, 'Login', 'Admin portal login successful');
@@ -80,6 +81,7 @@ if ($login_type === 'admin') {
             $_SESSION['employee_name'] = $employee['name'];
             $_SESSION['employee_dept'] = $employee['department'];
             $_SESSION['wallet_balance'] = $employee['wallet_balance'];
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 
             // Log activity
             log_activity($pdo, 'Login', 'Employee dashboard login successful');

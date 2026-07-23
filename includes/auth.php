@@ -76,6 +76,14 @@ if (session_status() == PHP_SESSION_NONE) {
         session_start();
     } else {
         session_start(['read_and_close' => true]);
+        
+        // Self-healing fallback: If the session was opened as read-only but is missing a CSRF token,
+        // re-open in write-capable mode to generate and persist it.
+        if (empty($_SESSION['csrf_token'])) {
+            session_write_close();
+            session_start();
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        }
     }
 }
 
